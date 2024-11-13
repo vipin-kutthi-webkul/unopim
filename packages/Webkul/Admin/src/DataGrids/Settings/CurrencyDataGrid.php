@@ -14,7 +14,7 @@ class CurrencyDataGrid extends DataGrid
      *
      * @var string
      */
-    protected $searchPlaceholder = 'admin::app.components.datagrid.toolbar.search_by.code_or_id';
+    protected $searchPlaceholder = 'admin::app.components.datagrid.toolbar.search_by.code';
 
     /**
      * Prepare query builder.
@@ -44,7 +44,7 @@ class CurrencyDataGrid extends DataGrid
             'index'      => 'id',
             'label'      => trans('admin::app.settings.currencies.index.datagrid.id'),
             'type'       => 'integer',
-            'searchable' => true,
+            'searchable' => false,
             'filterable' => true,
             'sortable'   => true,
         ]);
