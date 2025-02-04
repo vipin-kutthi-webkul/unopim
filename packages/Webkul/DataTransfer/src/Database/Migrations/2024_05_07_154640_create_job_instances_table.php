@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('entity_type');
             $table->enum('type', ['import', 'export', 'system']);
             $table->string('action');
-            $table->string('validation_strategy');
+            $table->string('validation_strategy')->nullable();
             $table->integer('allowed_errors')->default(0);
-            $table->char('field_separator', 1);
-            $table->string('file_path');
+            $table->char('field_separator', 1)->nullable();
+            $table->string('file_path')->nullable();
             $table->string('images_directory_path')->nullable();
             $table->timestamps();
         });

@@ -364,6 +364,17 @@ class AttributeTableSeeder extends Seeder
             ],
         ]);
 
+        if (DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+            // Get the maximum id from the table
+            $maxId = DB::select('SELECT MAX(id) AS max_id FROM attributes');
+            $maxIdValue = $maxId[0]->max_id;
+
+            // Set the sequence to start from the max id
+            DB::statement('
+        SELECT setval(pg_get_serial_sequence(\'attributes\', \'id\'), ?) 
+    ', [$maxIdValue]);
+        }
+
         $locales = $parameters['allowed_locales'] ?? [$defaultLocale];
 
         foreach ($locales as $locale) {

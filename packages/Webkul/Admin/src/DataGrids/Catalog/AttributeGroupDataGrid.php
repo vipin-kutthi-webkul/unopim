@@ -24,7 +24,12 @@ class AttributeGroupDataGrid extends DataGrid
             ->select(
                 'attribute_groups.id',
                 'attribute_groups.code',
-                DB::raw('(CASE WHEN '.$tablePrefix.'attribute_group_name.name IS NULL OR CHAR_LENGTH(TRIM('.$tablePrefix.'attribute_group_name.name)) < 1 THEN CONCAT("[", '.$tablePrefix.'attribute_groups.code,"]") ELSE '.$tablePrefix.'attribute_group_name.name END) as name')
+                DB::raw('(CASE 
+                    WHEN '.$tablePrefix.'attribute_group_name.name IS NULL 
+                         OR CHAR_LENGTH(TRIM('.$tablePrefix."attribute_group_name.name)) < 1 
+                    THEN CONCAT('[', ".$tablePrefix."attribute_groups.code, ']') 
+                    ELSE ".$tablePrefix.'attribute_group_name.name 
+                END) as name')
             );
 
         $this->addFilter('id', 'attribute_groups.id');

@@ -27,6 +27,17 @@ class AttributeFamilyTableSeeder extends Seeder
             ],
         ]);
 
+        if (DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+            // Get the maximum id from the table
+            $maxId = DB::select('SELECT MAX(id) AS max_id FROM attribute_families');
+            $maxIdValue = $maxId[0]->max_id;
+
+            // Set the sequence to start from the max id
+            DB::statement('
+        SELECT setval(pg_get_serial_sequence(\'attribute_families\', \'id\'), ?) 
+    ', [$maxIdValue]);
+        }
+
         $locales = $parameters['allowed_locales'] ?? [$defaultLocale];
 
         foreach ($locales as $locale) {
@@ -158,5 +169,17 @@ class AttributeFamilyTableSeeder extends Seeder
                 'position'                  => 5,
             ],
         ]);
+
+        if (DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+            // Get the maximum ID from the table
+            $maxId = DB::select('SELECT MAX(id) AS max_id FROM attribute_family_group_mappings');
+            $maxIdValue = $maxId[0]->max_id;
+
+            // Set the sequence to the max ID value for PostgreSQL
+            DB::statement('
+                SELECT setval(pg_get_serial_sequence(\'attribute_family_group_mappings\', \'id\'), ?)
+            ', [$maxIdValue]);
+        }
+
     }
 }

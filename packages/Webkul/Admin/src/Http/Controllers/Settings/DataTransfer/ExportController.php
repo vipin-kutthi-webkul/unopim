@@ -154,8 +154,8 @@ class ExportController extends Controller
             [
                 'action'               => 'fetch',
                 'validation_strategy'  => '',
-                'validation_strategy'  => '',
-                'allowed_errors'       => '',
+                'validation_strategy'  => null,
+                'allowed_errors'       => 0,
                 'state'                => 'pending',
                 'processed_rows_count' => 0,
                 'invalid_rows_count'   => 0,
@@ -201,7 +201,7 @@ class ExportController extends Controller
         $export = $this->jobInstancesRepository->findOrFail($id);
 
         try {
-            Storage::disk('private')->delete($export->file_path);
+            Storage::disk('private')->delete($export->file_path ?? '');
 
             Storage::disk('private')->delete($export->error_file_path ?? '');
 
@@ -261,6 +261,8 @@ class ExportController extends Controller
                 'user_id'          => $userId,
                 'created_at'       => now(),
                 'updated_at'       => now(),
+                'type'             => self::TYPE,
+                'action'           => 'fetch',
             ]);
 
             // Dispatch the Export job
@@ -270,7 +272,7 @@ class ExportController extends Controller
             return redirect()->route('admin.settings.data_transfer.tracker.view', $jobTrackInstance->id);
         } catch (\Exception $e) {
             // Log the error and redirect with an error message
-            \Log::error('Import failed for job instance '.$id.': '.$e->getMessage());
+            \Log::error('Export failed for job instance '.$id.': '.$e->getMessage());
 
             return redirect()->route('admin.settings.data_transfer.tracker.view', $id)
                 ->with('error', 'Failed to start the expor process. Please try again.');

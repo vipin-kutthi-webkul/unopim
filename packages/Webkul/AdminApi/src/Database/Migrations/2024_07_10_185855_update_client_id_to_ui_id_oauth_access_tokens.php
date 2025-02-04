@@ -11,9 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('oauth_access_tokens', function (Blueprint $table) {
-            $table->uuid('client_id')->change();
-        });
+        if (DB::getDriverName() === 'pgsql') {
+            // Explicitly convert the client_id column to UUID
+            DB::statement('ALTER TABLE oauth_access_tokens ALTER COLUMN client_id TYPE UUID USING client_id::text::uuid;');
+        } else {
+            // Handle for MySQL (if needed)
+            Schema::table('oauth_access_tokens', function (Blueprint $table) {
+                $table->uuid('client_id')->change();
+            });
+        }
     }
 
     /**

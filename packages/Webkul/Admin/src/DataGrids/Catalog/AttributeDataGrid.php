@@ -40,7 +40,12 @@ class AttributeDataGrid extends DataGrid
                 'value_per_locale',
                 'value_per_channel',
                 'created_at',
-                DB::raw('(CASE WHEN '.$tablePrefix.'attribute_name.name IS NULL OR CHAR_LENGTH(TRIM('.$tablePrefix.'attribute_name.name)) < 1 THEN CONCAT("[", '.$tablePrefix.'attributes.code,"]") ELSE '.$tablePrefix.'attribute_name.name END) as name')
+                DB::raw('(CASE 
+                    WHEN '.$tablePrefix.'attribute_name.name IS NULL 
+                         OR CHAR_LENGTH(TRIM('.$tablePrefix."attribute_name.name)) < 1 
+                    THEN CONCAT('[', ".$tablePrefix."attributes.code, ']') 
+                    ELSE ".$tablePrefix.'attribute_name.name 
+                END) as name')
             );
 
         return $queryBuilder;

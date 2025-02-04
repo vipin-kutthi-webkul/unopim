@@ -36,7 +36,7 @@ class UserForm extends FormRequest
     {
         return [
             'name'                  => ['required', new AlphaNumericSpace],
-            'email'                 => 'required|email|unique:admins,email,'.$this->id,
+            'email'                 => 'required|email|unique:admins,email,'.($this->id ? (int) $this->id : 'NULL'),
             'password'              => 'nullable',
             'password_confirmation' => 'nullable|required_with:password|same:password',
             'status'                => 'sometimes',

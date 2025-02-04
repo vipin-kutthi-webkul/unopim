@@ -262,6 +262,7 @@ class ImportController extends Controller
                 'created_at'            => now(),
                 'updated_at'            => now(),
                 'action'                => $import->action,
+                'type'                  => self::TYPE,
             ]);
 
             // Dispatch the import job

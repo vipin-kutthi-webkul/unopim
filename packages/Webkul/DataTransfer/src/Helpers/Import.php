@@ -397,11 +397,23 @@ class Import
      */
     public function completed(): void
     {
+        $driver = DB::getDriverName(); // Get the database driver name
+
+        if ($driver === 'pgsql') {
+            $updated = "SUM(COALESCE((summary::jsonb ->> 'updated')::INTEGER, 0)) AS updated";
+            $created = "SUM(COALESCE((summary::jsonb ->> 'created')::INTEGER, 0)) AS created";
+            $deleted = "SUM(COALESCE((summary::jsonb ->> 'deleted')::INTEGER, 0)) AS deleted";
+        } else {
+            $updated = "SUM(json_unquote(json_extract(summary, '$.\"updated\"'))) AS updated";
+            $created = "SUM(json_unquote(json_extract(summary, '$.\"created\"'))) AS created";
+            $deleted = "SUM(json_unquote(json_extract(summary, '$.\"deleted\"'))) AS deleted";
+        }
+
         $summary = $this->jobTrackBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
+                DB::raw($created),
+                DB::raw($updated),
+                DB::raw($deleted),
             )
             ->where('job_track_id', $this->import->id)
             ->groupBy('job_track_id')
@@ -434,11 +446,23 @@ class Import
             ? round($completed / $total * 100)
             : 0;
 
+        $driver = DB::getDriverName(); // Get the database driver name
+
+        if ($driver === 'pgsql') {
+            $updated = "SUM(COALESCE((summary::jsonb ->> 'updated')::INTEGER, 0)) AS updated";
+            $created = "SUM(COALESCE((summary::jsonb ->> 'created')::INTEGER, 0)) AS created";
+            $deleted = "SUM(COALESCE((summary::jsonb ->> 'deleted')::INTEGER, 0)) AS deleted";
+        } else {
+            $updated = "SUM(json_unquote(json_extract(summary, '$.\"updated\"'))) AS updated";
+            $created = "SUM(json_unquote(json_extract(summary, '$.\"created\"'))) AS created";
+            $deleted = "SUM(json_unquote(json_extract(summary, '$.\"deleted\"'))) AS deleted";
+        }
+
         $summary = $this->jobTrackBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
+                DB::raw($created),
+                DB::raw($updated),
+                DB::raw($deleted),
             )
             ->where('job_track_id', $this->import->id)
             ->where('state', $state)

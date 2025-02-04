@@ -11,9 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('oauth_clients', function (Blueprint $table) {
-            $table->uuid('id')->change();
-        });
+        $databaseType = DB::getDriverName(); // Detect database type
+
+        if ($databaseType === 'pgsql') {
+            DB::statement('ALTER TABLE oauth_clients ALTER COLUMN id DROP DEFAULT;'); // Remove existing default
+            DB::statement('ALTER TABLE oauth_clients ALTER COLUMN id TYPE UUID USING id::text::uuid;'); // Change type
+            DB::statement('ALTER TABLE oauth_clients ALTER COLUMN id SET DEFAULT gen_random_uuid();'); // Set new default
+        } else {
+            Schema::table('oauth_clients', function (Blueprint $table) {
+                $table->uuid('id')->change();
+            });
+        }
     }
 
     /**

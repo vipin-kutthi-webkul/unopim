@@ -9,36 +9,77 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (! DB::select("SELECT * FROM information_schema.TRIGGERS WHERE TRIGGER_NAME = 'audit_before_insert' AND EVENT_OBJECT_SCHEMA = '".DB::getDatabaseName()."'")) {
-            $tablePrefix = DB::getTablePrefix();
+        $databaseType = DB::getDriverName(); // Detects whether it's MySQL or PostgreSQL
 
-            DB::unprepared('CREATE TRIGGER audit_before_insert
-                        BEFORE INSERT ON '.$tablePrefix.'audits
-                        FOR EACH ROW
-                        BEGIN
-                            DECLARE max_version_id INT DEFAULT 0;
-                            DECLARE old_version_id INT;
+        if ($databaseType === 'pgsql') {
+            // PostgreSQL Trigger
+            DB::unprepared('
+            CREATE OR REPLACE FUNCTION audit_before_insert_trigger()
+            RETURNS TRIGGER AS $$
+            DECLARE
+                max_version_id INT DEFAULT 0;
+                old_version_id INT;
+            BEGIN
+                -- Find existing version_id with the same tags and exact created_at timestamp
+                SELECT version_id INTO old_version_id
+                FROM audits
+                WHERE tags = NEW.tags AND url = NEW.url AND created_at = NEW.created_at
+                LIMIT 1;
 
-                            -- Find existing version_id with the same tags and exact created_at timestamp
-                            SELECT version_id INTO old_version_id
-                            FROM '.$tablePrefix.'audits
-                            WHERE tags = NEW.tags AND url = NEW.url AND created_at = NEW.created_at
-                            LIMIT 1;
+                -- Get the maximum version_id for the same tags
+                SELECT MAX(version_id) INTO max_version_id
+                FROM audits
+                WHERE tags = NEW.tags AND url = NEW.url;
 
-                            -- Get the maximum version_id for the same tags
-                            SELECT MAX(version_id) INTO max_version_id
-                            FROM '.$tablePrefix.'audits
-                            WHERE tags = NEW.tags AND url = NEW.url;
+                -- Assign version_id based on the findings
+                IF old_version_id IS NOT NULL THEN
+                    NEW.version_id := old_version_id;
+                ELSIF max_version_id IS NULL THEN
+                    NEW.version_id := 1;
+                ELSE
+                    NEW.version_id := max_version_id + 1;
+                END IF;
 
-                            -- Assign version_id based on the findings
-                            IF old_version_id IS NOT NULL THEN
-                                SET NEW.version_id = old_version_id;
-                            ELSEIF max_version_id IS NULL THEN
-                                SET NEW.version_id = 1;
-                            ELSE
-                                SET NEW.version_id = max_version_id + 1;
-                            END IF;
-                        END;');
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER audit_before_insert
+            BEFORE INSERT ON audits
+            FOR EACH ROW
+            EXECUTE FUNCTION audit_before_insert_trigger();
+        ');
+        } else {
+            // MySQL Trigger
+            DB::unprepared('
+            CREATE TRIGGER audit_before_insert
+            BEFORE INSERT ON audits
+            FOR EACH ROW
+            BEGIN
+                DECLARE max_version_id INT DEFAULT 0;
+                DECLARE old_version_id INT;
+
+                -- Find existing version_id with the same tags and exact created_at timestamp
+                SELECT version_id INTO old_version_id
+                FROM audits
+                WHERE tags = NEW.tags AND url = NEW.url AND created_at = NEW.created_at
+                LIMIT 1;
+
+                -- Get the maximum version_id for the same tags
+                SELECT MAX(version_id) INTO max_version_id
+                FROM audits
+                WHERE tags = NEW.tags AND url = NEW.url;
+
+                -- Assign version_id based on the findings
+                IF old_version_id IS NOT NULL THEN
+                    SET NEW.version_id = old_version_id;
+                ELSEIF max_version_id IS NULL THEN
+                    SET NEW.version_id = 1;
+                ELSE
+                    SET NEW.version_id = max_version_id + 1;
+                END IF;
+            END;
+        ');
         }
     }
 

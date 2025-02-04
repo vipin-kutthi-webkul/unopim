@@ -152,24 +152,31 @@ class CategoryDataGrid extends DataGrid
      */
     private function getSubQuery(array $locale, string $tablePrefix): Builder
     {
-        $locales = implode(', ', $locale);
+        // Ensure the locales are properly escaped and quoted in PostgreSQL
+        $localeString = implode("', '", $locale);  // Multiple locales handled
+        $jsonPath = "'locale_specific'->'$localeString'->>'name'";
+
+        // Check if the database is PostgreSQL or MySQL
+        $jsonExtractFunction = DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql'
+            ? "additional_data->$jsonPath"
+            : "JSON_EXTRACT(additional_data, '$.locale_specific.$localeString.name')";
 
         return DB::table(DB::raw("(WITH RECURSIVE tree_view AS (
-            SELECT id,
-                parent_id,
-                (CASE WHEN JSON_EXTRACT(additional_data, '$.locale_specific.".$locales.".name') IS NOT NULL THEN REPLACE(JSON_EXTRACT(additional_data, '$.locale_specific.".$locales.".name'), '\"', '') ELSE CONCAT('[', code, ']') END) as name
-            FROM ".$tablePrefix."categories
-            WHERE parent_id IS NULL
-            UNION ALL
+        SELECT id,
+            parent_id,
+            (CASE WHEN $jsonExtractFunction IS NOT NULL THEN REPLACE($jsonExtractFunction, '\"', '') ELSE CONCAT('[', code, ']') END) as name
+        FROM ".$tablePrefix."categories
+        WHERE parent_id IS NULL
+        UNION ALL
 
-            SELECT parent.id,
-                parent.parent_id,
-                CONCAT(tree_view.name, ' / ', (CASE WHEN JSON_EXTRACT(additional_data, '$.locale_specific.".$locales.".name') IS NOT NULL THEN REPLACE(JSON_EXTRACT(additional_data, '$.locale_specific.".$locales.".name'), '\"', '') ELSE CONCAT('[', code, ']') END)) AS name
-            FROM ".$tablePrefix.'categories parent
-            JOIN tree_view ON parent.parent_id = tree_view.id
-        )
-        SELECT id, parent_id, name
-        FROM tree_view
-        ) as CategoryNameTable'));
+        SELECT parent.id,
+            parent.parent_id,
+            CONCAT(tree_view.name, ' / ', (CASE WHEN $jsonExtractFunction IS NOT NULL THEN REPLACE($jsonExtractFunction, '\"', '') ELSE CONCAT('[', code, ']') END)) AS name
+        FROM ".$tablePrefix.'categories parent
+        JOIN tree_view ON parent.parent_id = tree_view.id
+    )
+    SELECT id, parent_id, name
+    FROM tree_view
+    ) as CategoryNameTable'));
     }
 }

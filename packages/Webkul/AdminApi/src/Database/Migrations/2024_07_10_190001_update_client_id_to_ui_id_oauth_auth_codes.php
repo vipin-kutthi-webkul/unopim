@@ -11,9 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('oauth_auth_codes', function (Blueprint $table) {
-            $table->uuid('client_id')->change();
-        });
+        if (DB::getDriverName() === 'pgsql') {
+            // Step 1: Remove any existing default for the column
+            DB::statement('ALTER TABLE oauth_auth_codes ALTER COLUMN client_id DROP DEFAULT;');
+
+            // Step 2: Alter the column type with explicit conversion
+            DB::statement('ALTER TABLE oauth_auth_codes ALTER COLUMN client_id TYPE UUID USING client_id::text::uuid;');
+        } else {
+            Schema::table('oauth_auth_codes', function (Blueprint $table) {
+                $table->uuid('client_id')->change();
+            });
+        }
     }
 
     /**

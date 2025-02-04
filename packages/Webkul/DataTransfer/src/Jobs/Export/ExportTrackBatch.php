@@ -63,7 +63,7 @@ class ExportTrackBatch implements ShouldQueue
         $pendingBatch = $this->exportBatch->batches->where('state', ExportHelper::STATE_PENDING)->first();
 
         if ($pendingBatch) {
-            // Start the import process
+            // Start the export process
             try {
                 $exportHelper->start(null, $this->queue);
             } catch (\Exception $e) {

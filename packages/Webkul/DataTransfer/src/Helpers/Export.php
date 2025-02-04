@@ -238,11 +238,23 @@ class Export
      */
     public function completed(): void
     {
+        $driver = DB::getDriverName(); // Get the database driver name
+
+        if ($driver === 'pgsql') {
+            $processed = "SUM(COALESCE((summary::jsonb ->> 'processed')::INTEGER, 0)) AS processed";
+            $created = "SUM(COALESCE((summary::jsonb ->> 'created')::INTEGER, 0)) AS created";
+            $skipped = "SUM(COALESCE((summary::jsonb ->> 'skipped')::INTEGER, 0)) AS skipped";
+        } else {
+            $processed = 'SUM(json_unquote(json_extract(summary, \'$."processed"\'))) AS processed';
+            $created = 'SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created';
+            $skipped = 'SUM(json_unquote(json_extract(summary, \'$."skipped"\'))) AS skipped';
+        }
+
         $summary = $this->jobTrackBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."processed"\'))) AS processed'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."skipped"\'))) AS skipped'),
+                DB::raw($processed),
+                DB::raw($created),
+                DB::raw($skipped)
             )
             ->where('job_track_id', $this->export->id)
             ->groupBy('job_track_id')
@@ -279,11 +291,23 @@ class Export
             ? round($completed / $total * 100)
             : 0;
 
+        $driver = DB::getDriverName(); // Get the database driver name
+
+        if ($driver === 'pgsql') {
+            $processed = "SUM(COALESCE((summary::jsonb ->> 'processed')::INTEGER, 0)) AS processed";
+            $created = "SUM(COALESCE((summary::jsonb ->> 'created')::INTEGER, 0)) AS created";
+            $skipped = "SUM(COALESCE((summary::jsonb ->> 'skipped')::INTEGER, 0)) AS skipped";
+        } else {
+            $processed = "SUM(json_unquote(json_extract(summary, '$.\"processed\"'))) AS processed";
+            $created = "SUM(json_unquote(json_extract(summary, '$.\"created\"'))) AS created";
+            $skipped = "SUM(json_unquote(json_extract(summary, '$.\"skipped\"'))) AS skipped";
+        }
+
         $summary = $this->jobTrackBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."processed"\'))) AS processed'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."skipped"\'))) AS skipped'),
+                DB::raw($processed),
+                DB::raw($created),
+                DB::raw($skipped)
             )
             ->where('job_track_id', $this->export->id)
             ->where('state', $state)

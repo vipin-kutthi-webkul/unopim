@@ -35,5 +35,16 @@ class AdminsTableSeeder extends Seeder
             'role_id'       => 1,
             'ui_locale_id'  => $defaultLocaleId,
         ]);
+
+        if (DB::getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+            // Get the maximum id from the table
+            $maxId = DB::select('SELECT MAX(id) AS max_id FROM admins');
+            $maxIdValue = $maxId[0]->max_id;
+
+            // Set the sequence to start from the max id
+            DB::statement('
+        SELECT setval(pg_get_serial_sequence(\'admins\', \'id\'), ?) 
+    ', [$maxIdValue]);
+        }
     }
 }

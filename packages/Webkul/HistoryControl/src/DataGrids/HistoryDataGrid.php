@@ -38,8 +38,21 @@ class HistoryDataGrid extends DataGrid
             ->where(function ($query) {
                 $query->where('his.tags', '=', $this->entityName)
                     ->where('his.history_id', '=', $this->entityId);
-            })
-            ->groupBy('his.updated_at', 'his.user_id');
+            });
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $queryBuilder->groupBy([
+                'his.id',
+                'his.tags',
+                'his.event',
+                'his.updated_at',
+                'his.version_id',
+                'his.user_id',
+                'admins.name',
+            ]);
+        } else {
+            $queryBuilder->groupBy('his.updated_at', 'his.user_id');
+        }
 
         return $queryBuilder;
     }
