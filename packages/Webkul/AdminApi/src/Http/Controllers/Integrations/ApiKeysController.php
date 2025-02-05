@@ -81,6 +81,8 @@ class ApiKeysController extends Controller
             'permissions',
         ]);
 
+        $data['revoked'] = $data['revoked'] ?? 0;
+
         $apiKey = $this->apiKeyRepository->create($data);
 
         Event::dispatch('user.api_integration.create.after', $apiKey);

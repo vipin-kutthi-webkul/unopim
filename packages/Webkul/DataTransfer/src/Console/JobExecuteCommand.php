@@ -162,6 +162,7 @@ class JobExecuteCommand extends Command
             'created_at'            => now(),
             'updated_at'            => now(),
             'action'                => $jobInstance->action,
+            'type'                  => $jobInstance->type,
         ]);
 
         // Generate a queue name based on the job instance code, type, and job track ID

@@ -90,6 +90,10 @@ class ExportController extends Controller
             $jobValidator->validate($data);
         }
 
+        $data['validation_strategy'] = $data['validation_strategy'] ?? '';
+        $data['file_path'] = $data['file_path'] ?? '';
+        $data['field_separator'] = $data['field_separator'] ?? '';
+
         Event::dispatch('data_transfer.exports.create.validate.after');
 
         $export = $this->jobInstancesRepository->create(
@@ -154,7 +158,7 @@ class ExportController extends Controller
             [
                 'action'               => 'fetch',
                 'validation_strategy'  => '',
-                'validation_strategy'  => null,
+                'validation_strategy'  => '',
                 'allowed_errors'       => 0,
                 'state'                => 'pending',
                 'processed_rows_count' => 0,
@@ -168,6 +172,9 @@ class ExportController extends Controller
                 'type'                 => self::TYPE,
             ]
         );
+
+        $data['file_path'] = $data['file_path'] ?? '';
+        $data['field_separator'] = $data['field_separator'] ?? '';
 
         Event::dispatch('data_transfer.exports.update.validate.before');
 
@@ -252,19 +259,19 @@ class ExportController extends Controller
             Event::dispatch('data_transfer.exports.export.now.before', $jobInstance);
 
             $jobTrackInstance = $this->jobTrackRepository->create([
-                'state'            => Export::STATE_PENDING,
-                'allowed_errors'   => $jobInstance->allowed_errors,
-                'field_separator'  => $jobInstance->field_separator,
-                'file_path'        => $jobInstance->file_path,
-                'meta'             => $jobInstance->toJson(),
-                'job_instances_id' => $jobInstance->id,
-                'user_id'          => $userId,
-                'created_at'       => now(),
-                'updated_at'       => now(),
-                'type'             => self::TYPE,
-                'action'           => 'fetch',
+                'state'               => Export::STATE_PENDING,
+                'allowed_errors'      => $jobInstance->allowed_errors,
+                'field_separator'     => $jobInstance->field_separator,
+                'file_path'           => $jobInstance->file_path,
+                'meta'                => $jobInstance->toJson(),
+                'job_instances_id'    => $jobInstance->id,
+                'user_id'             => $userId,
+                'created_at'          => now(),
+                'updated_at'          => now(),
+                'type'                => self::TYPE,
+                'action'              => 'fetch',
+                'validation_strategy' => $jobInstance->validation_strategy,
             ]);
-
             // Dispatch the Export job
             ExportTrackBatch::dispatch($jobTrackInstance);
 

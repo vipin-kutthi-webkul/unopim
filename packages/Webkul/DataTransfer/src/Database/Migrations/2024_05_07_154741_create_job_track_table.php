@@ -16,14 +16,14 @@ return new class extends Migration
             $table->string('state')->default('pending');
             $table->string('type');
             $table->string('action');
-            $table->string('validation_strategy')->nullable();
+            $table->string('validation_strategy');
             $table->integer('allowed_errors')->default(0);
             $table->integer('processed_rows_count')->default(0);
             $table->integer('invalid_rows_count')->default(0);
             $table->integer('errors_count')->default(0);
             $table->json('errors')->nullable();
-            $table->string('field_separator')->nullable();
-            $table->string('file_path')->nullable();
+            $table->string('field_separator');
+            $table->string('file_path');
             $table->string('images_directory_path')->nullable();
             $table->string('error_file_path')->nullable();
             $table->json('summary')->nullable();
