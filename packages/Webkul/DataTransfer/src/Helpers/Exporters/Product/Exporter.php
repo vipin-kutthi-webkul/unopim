@@ -181,7 +181,14 @@ class Exporter extends AbstractExporter
                 unset($attributeValues[$attributeCode]);
             }
 
-            if ($withMedia && in_array($attribute->type, [AttributeTypes::FILE_ATTRIBUTE_TYPE, AttributeTypes::IMAGE_ATTRIBUTE_TYPE, AttributeTypes::GALLERY_ATTRIBUTE_TYPE])) {
+            if (in_array($attribute->type, [AttributeTypes::FILE_ATTRIBUTE_TYPE, AttributeTypes::IMAGE_ATTRIBUTE_TYPE, AttributeTypes::GALLERY_ATTRIBUTE_TYPE])) {
+
+                if (! $withMedia) {
+                    unset($attributeValues[$attributeCode]);
+
+                    continue;
+                }
+
                 $existingFilePath = $values[$attributeCode] ?? null;
 
                 $existingFilePath = is_array($existingFilePath) ? $existingFilePath : [$existingFilePath];
